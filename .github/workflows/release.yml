@@ -75,6 +75,7 @@ jobs:
         loaders: |
           paper
           folia
+          purpur
         game-versions: |
           1.21.4
           1.21.3
