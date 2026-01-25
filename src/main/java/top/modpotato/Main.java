@@ -17,6 +17,7 @@ import top.modpotato.restoration.RestorationProgressTracker;
 import top.modpotato.scheduler.NetheriteRemover;
 import top.modpotato.util.DebrisStorage;
 import top.modpotato.util.NetheriteDetector;
+import com.tcoded.folialib.FoliaLib;
 
 /**
  * Main plugin class for AntiNetherite
@@ -27,7 +28,7 @@ public class Main extends JavaPlugin {
     private NetheriteDetector netheriteDetector;
     private DebrisStorage debrisStorage;
     private RestorationProgressTracker restorationProgressTracker;
-    
+
     private CraftListener craftListener;
     private EquipListener equipListener;
     private AttackListener attackListener;
@@ -37,7 +38,8 @@ public class Main extends JavaPlugin {
     private MiningListener miningListener;
     private ContainerTransferListener containerTransferListener;
     private boolean isFolia;
-    
+    private FoliaLib foliaLib;
+
     // Track if the plugin is shutting down to prevent unnecessary operations
     private boolean isShuttingDown = false;
 
@@ -45,38 +47,42 @@ public class Main extends JavaPlugin {
     public void onEnable() {
         try {
             saveDefaultConfig();
-            
+
             // Initialize config
             config = new Config(this);
-            
+
             // Initialize Netherite detector
             netheriteDetector = new NetheriteDetector(config);
-            
+
             // Initialize debris storage
             debrisStorage = new DebrisStorage(this, config);
-            
+
             // Initialize restoration progress tracker
             restorationProgressTracker = new RestorationProgressTracker(this);
+
+            // Initialize FoliaLib
+            foliaLib = new FoliaLib(this);
+
             restorationProgressTracker.start();
-            
+
             // Check if running on Folia
             isFolia = checkFolia();
             getLogger().info("Running on " + (isFolia ? "Folia" : "Bukkit") + " server");
-            
+
             // Initialize netherite remover
             netheriteRemover = new NetheriteRemover(this, isFolia, netheriteDetector, config);
-            
+
             // Start tasks based on config
             if (config.isClearNetherite()) {
                 netheriteRemover.start(config.getDelayTicks());
             }
-    
+
             // Register listeners
             registerListeners();
-            
+
             // Register command
             getCommand("antinetherite").setExecutor(new AntiNetheriteCommand(this));
-            
+
             getLogger().info("AntiNetherite has been enabled!");
         } catch (Exception e) {
             getLogger().severe("Error enabling AntiNetherite: " + e.getMessage());
@@ -88,40 +94,40 @@ public class Main extends JavaPlugin {
     @Override
     public void onDisable() {
         isShuttingDown = true;
-        
+
         try {
             // Stop restoration progress tracker
             if (restorationProgressTracker != null) {
                 restorationProgressTracker.stop();
             }
-            
+
             // Stop tasks
             if (netheriteRemover != null) {
                 netheriteRemover.stop();
             }
-            
+
             // Restore Ancient Debris if explicitly configured to do so
             if (miningListener != null && config.isRestoreDebrisOnDisable()) {
                 getLogger().info("Restoring Ancient Debris blocks...");
                 int count = miningListener.restoreAllDebris();
                 getLogger().info("Restored " + count + " Ancient Debris blocks");
             }
-            
+
             // Unregister listeners
             unregisterListeners();
-            
+
             // Save debris storage
             if (debrisStorage != null) {
                 debrisStorage.saveStorage();
             }
-            
+
             getLogger().info("AntiNetherite has been disabled!");
         } catch (Exception e) {
             getLogger().severe("Error disabling AntiNetherite: " + e.getMessage());
             e.printStackTrace();
         }
     }
-    
+
     /**
      * Registers event listeners based on configuration
      */
@@ -131,25 +137,25 @@ public class Main extends JavaPlugin {
                 craftListener = new CraftListener(netheriteDetector, config);
                 getServer().getPluginManager().registerEvents(craftListener, this);
             }
-    
+
             if (config.isCancelEquip()) {
                 equipListener = new EquipListener(netheriteDetector, config);
                 getServer().getPluginManager().registerEvents(equipListener, this);
             }
-    
+
             if (config.isCancelAttack()) {
                 attackListener = new AttackListener(netheriteDetector, config);
                 getServer().getPluginManager().registerEvents(attackListener, this);
             }
-            
+
             if (config.isCancelPickup()) {
                 pickupListener = new PickupListener(netheriteDetector, config);
                 getServer().getPluginManager().registerEvents(pickupListener, this);
             }
-            
+
             dropListener = new DropListener(config.isRemoveDropped(), netheriteDetector, config);
             getServer().getPluginManager().registerEvents(dropListener, this);
-            
+
             if (config.isCancelInventoryMove()) {
                 inventoryMoveListener = new InventoryMoveListener(netheriteDetector, config);
                 getServer().getPluginManager().registerEvents(inventoryMoveListener, this);
@@ -159,14 +165,15 @@ public class Main extends JavaPlugin {
                 containerTransferListener = new ContainerTransferListener(netheriteDetector, config);
                 getServer().getPluginManager().registerEvents(containerTransferListener, this);
             }
-            
-            // Register mining listener if either ancient debris replacement option is enabled
+
+            // Register mining listener if either ancient debris replacement option is
+            // enabled
             if (config.isReplaceWhenMined() || config.isReplaceOnChunkLoad()) {
-                miningListener = new MiningListener(debrisStorage, 
-                                                   config.isReplaceWhenMined(), 
-                                                   config.isReplaceOnChunkLoad(),
-                                                   config.isOnlyReplaceGeneratedChunks(),
-                                                   config);
+                miningListener = new MiningListener(debrisStorage,
+                        config.isReplaceWhenMined(),
+                        config.isReplaceOnChunkLoad(),
+                        config.isOnlyReplaceGeneratedChunks(),
+                        config);
                 getServer().getPluginManager().registerEvents(miningListener, this);
             }
         } catch (Exception e) {
@@ -174,7 +181,7 @@ public class Main extends JavaPlugin {
             e.printStackTrace();
         }
     }
-    
+
     /**
      * Unregisters all event listeners
      */
@@ -184,27 +191,27 @@ public class Main extends JavaPlugin {
                 HandlerList.unregisterAll(craftListener);
                 craftListener = null;
             }
-    
+
             if (equipListener != null) {
                 HandlerList.unregisterAll(equipListener);
                 equipListener = null;
             }
-    
+
             if (attackListener != null) {
                 HandlerList.unregisterAll(attackListener);
                 attackListener = null;
             }
-            
+
             if (pickupListener != null) {
                 HandlerList.unregisterAll(pickupListener);
                 pickupListener = null;
             }
-            
+
             if (dropListener != null) {
                 HandlerList.unregisterAll(dropListener);
                 dropListener = null;
             }
-            
+
             if (inventoryMoveListener != null) {
                 HandlerList.unregisterAll(inventoryMoveListener);
                 inventoryMoveListener = null;
@@ -214,7 +221,7 @@ public class Main extends JavaPlugin {
                 HandlerList.unregisterAll(containerTransferListener);
                 containerTransferListener = null;
             }
-            
+
             if (miningListener != null) {
                 HandlerList.unregisterAll(miningListener);
                 miningListener = null;
@@ -224,9 +231,10 @@ public class Main extends JavaPlugin {
             e.printStackTrace();
         }
     }
-    
+
     /**
      * Checks if the server is running on Folia
+     * 
      * @return true if running on Folia, false otherwise
      */
     private boolean checkFolia() {
@@ -237,43 +245,45 @@ public class Main extends JavaPlugin {
             return false;
         }
     }
-    
+
     /**
      * Updates a specific configuration value and applies changes
-     * @param path The configuration path
+     * 
+     * @param path  The configuration path
      * @param value The new value
      */
     public void updateConfig(String path, Object value) {
         config.update(path, value);
-        
+
         // Reload Netherite detector
         if (netheriteDetector != null) {
             netheriteDetector.reloadNetheriteItems();
         }
-        
+
         // Re-register listeners and tasks based on new config
         unregisterListeners();
-        
+
         if (netheriteRemover != null) {
             netheriteRemover.stop();
         }
-        
+
         if (config.isClearNetherite()) {
             netheriteRemover.start(config.getDelayTicks());
         }
-        
+
         registerListeners();
     }
-    
+
     /**
      * Gets the current configuration value
+     * 
      * @param path The configuration path
      * @return The configuration value
      */
     public Object getConfigValue(String path) {
         return config.getValue(path);
     }
-    
+
     /**
      * Reloads the plugin configuration
      */
@@ -281,79 +291,92 @@ public class Main extends JavaPlugin {
         if (isShuttingDown) {
             return;
         }
-        
+
         try {
             boolean oldReplaceWhenMined = config.isReplaceWhenMined();
             boolean oldReplaceOnChunkLoad = config.isReplaceOnChunkLoad();
-            
+
             // Reload config
             config.reload();
-            
+
             // Reload Netherite detector
             netheriteDetector.reloadNetheriteItems();
-            
+
             // Stop tasks
             if (netheriteRemover != null) {
                 netheriteRemover.stop();
             }
-            
+
             // Restore Ancient Debris if explicitly configured to do so
-            if (miningListener != null && 
-                (oldReplaceWhenMined || oldReplaceOnChunkLoad) && 
-                (!config.isReplaceWhenMined() && !config.isReplaceOnChunkLoad()) &&
-                config.isRestoreDebrisOnConfigChange()) {
+            if (miningListener != null &&
+                    (oldReplaceWhenMined || oldReplaceOnChunkLoad) &&
+                    (!config.isReplaceWhenMined() && !config.isReplaceOnChunkLoad()) &&
+                    config.isRestoreDebrisOnConfigChange()) {
                 getLogger().info("Restoring Ancient Debris blocks due to config change...");
                 int count = miningListener.restoreAllDebris();
                 getLogger().info("Restored " + count + " Ancient Debris blocks");
             }
-            
+
             // Unregister listeners
             unregisterListeners();
-            
+
             // Register listeners again
             registerListeners();
-            
+
             // Start tasks based on config
             if (config.isClearNetherite()) {
                 netheriteRemover.start(config.getDelayTicks());
             }
-            
+
             getLogger().info("AntiNetherite configuration reloaded.");
         } catch (Exception e) {
             getLogger().severe("Error reloading configuration: " + e.getMessage());
             e.printStackTrace();
         }
     }
-    
+
     /**
      * Gets the Netherite detector
+     * 
      * @return The Netherite detector
      */
     public NetheriteDetector getNetheriteDetector() {
         return netheriteDetector;
     }
-    
+
     /**
      * Gets the debris storage
+     * 
      * @return The debris storage
      */
     public DebrisStorage getDebrisStorage() {
         return debrisStorage;
     }
-    
+
     /**
      * Gets the restoration progress tracker
+     * 
      * @return The restoration progress tracker
      */
     public RestorationProgressTracker getRestorationProgressTracker() {
         return restorationProgressTracker;
     }
-    
+
     /**
      * Checks if the plugin is shutting down
+     * 
      * @return true if the plugin is shutting down, false otherwise
      */
     public boolean isShuttingDown() {
         return isShuttingDown;
+    }
+
+    /**
+     * Gets the FoliaLib instance
+     * 
+     * @return The FoliaLib instance
+     */
+    public FoliaLib getFoliaLib() {
+        return foliaLib;
     }
 }
