@@ -67,7 +67,7 @@ jobs:
       if: env.IS_RELEASE == 'true'
       uses: kir-antipov/mc-publish@v3.3
       with:
-        modrinth-id: "ab7RsjrW"
+        modrinth-id: "48MWikJI"
         modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
         files: build/libs/AntiNetherite-*-all.jar
         name: AntiNetherite ${{ env.VERSION }}
