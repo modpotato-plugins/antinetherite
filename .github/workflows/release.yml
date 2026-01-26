@@ -67,7 +67,7 @@ jobs:
       if: ${{ steps.versioning.outputs.IS_RELEASE == 'true' }}
       uses: softprops/action-gh-release@v2
       with:
-        files: build/libs/AntiNetherite-*-all.jar
+        files: build/libs/antinetherite-*-all.jar
         generate_release_notes: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -76,7 +76,7 @@ jobs:
       if: ${{ steps.versioning.outputs.IS_RELEASE == 'false' }}
       uses: actions/upload-artifact@v4
       with:
-        name: AntiNetherite-${{ env.VERSION }}
+        name: antinetherite-${{ env.VERSION }}
         path: build/libs
 
     - name: Publish to Modrinth
@@ -85,8 +85,8 @@ jobs:
       with:
         modrinth-id: "48MWikJI"
         modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
-        files: build/libs/AntiNetherite-*-all.jar
-        name: AntiNetherite ${{ env.VERSION }}
+        files: build/libs/antinetherite-*-all.jar
+        name: antinetherite-${{ env.VERSION }}
         version: ${{ env.VERSION }}
         changelog: ${{ steps.changelog.outputs.CHANGELOG }}
         loaders: |
