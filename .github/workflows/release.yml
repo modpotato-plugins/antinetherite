@@ -28,10 +28,12 @@ jobs:
       run: |
         if [[ $GITHUB_REF == refs/tags/v* ]]; then
           VERSION=${GITHUB_REF#refs/tags/v}
+          echo "IS_RELEASE=true" >> $GITHUB_OUTPUT
           echo "IS_RELEASE=true" >> $GITHUB_ENV
         else
           COMMIT_COUNT=$(git rev-list --count HEAD)
           VERSION="$COMMIT_COUNT"
+          echo "IS_RELEASE=false" >> $GITHUB_OUTPUT
           echo "IS_RELEASE=false" >> $GITHUB_ENV
         fi
         echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
@@ -47,9 +49,23 @@ jobs:
     - name: Build with Gradle
       run: ./gradlew build shadowJar
       
+    - name: Generate Changelog
+      id: changelog
+      if: ${{ steps.versioning.outputs.IS_RELEASE == 'true' }}
+      run: |
+        echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+        PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+        if [ -z "$PREV_TAG" ]; then
+          git log --pretty=format:"- %s" >> $GITHUB_OUTPUT
+        else
+          git log $PREV_TAG..HEAD --pretty=format:"- %s" >> $GITHUB_OUTPUT
+        fi
+        echo "" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
     - name: Create Release
-      if: env.IS_RELEASE == 'true'
-      uses: softprops/action-gh-release@v1
+      if: ${{ steps.versioning.outputs.IS_RELEASE == 'true' }}
+      uses: softprops/action-gh-release@v2
       with:
         files: build/libs/AntiNetherite-*-all.jar
         generate_release_notes: true
@@ -57,14 +73,14 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Upload build artifacts
-      if: env.IS_RELEASE == 'false'
+      if: ${{ steps.versioning.outputs.IS_RELEASE == 'false' }}
       uses: actions/upload-artifact@v4
       with:
         name: AntiNetherite-${{ env.VERSION }}
         path: build/libs
 
     - name: Publish to Modrinth
-      if: env.IS_RELEASE == 'true'
+      if: ${{ steps.versioning.outputs.IS_RELEASE == 'true' }}
       uses: kir-antipov/mc-publish@v3.3
       with:
         modrinth-id: "48MWikJI"
@@ -72,6 +88,7 @@ jobs:
         files: build/libs/AntiNetherite-*-all.jar
         name: AntiNetherite ${{ env.VERSION }}
         version: ${{ env.VERSION }}
+        changelog: ${{ steps.changelog.outputs.CHANGELOG }}
         loaders: |
           paper
           folia
