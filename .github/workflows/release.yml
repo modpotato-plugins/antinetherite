@@ -67,7 +67,7 @@ jobs:
       if: ${{ steps.versioning.outputs.IS_RELEASE == 'true' }}
       uses: softprops/action-gh-release@v2
       with:
-        files: build/libs/antinetherite-*-all.jar
+        files: build/libs/antinetherite-*.jar
         generate_release_notes: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -85,7 +85,7 @@ jobs:
       with:
         modrinth-id: "48MWikJI"
         modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
-        files: build/libs/antinetherite-*-all.jar
+        files: build/libs/antinetherite-*.jar
         name: antinetherite-${{ env.VERSION }}
         version: ${{ env.VERSION }}
         changelog: ${{ steps.changelog.outputs.CHANGELOG }}
