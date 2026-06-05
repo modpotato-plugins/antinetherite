@@ -76,6 +76,12 @@ anti-netherite:
     # If false, only loot-tables.items is used for loot table filtering
     inherit-detection-items: true
 
+    # Should loot table filtering use name matching to detect blocked items?
+    # If true, any material whose name contains "NETHERITE" will be blocked from loot tables
+    # This operates independently of inherit-detection-items — it always runs a Material scan
+    # for loot tables when enabled, regardless of whether detection items are inherited
+    use-name-matching: true
+
     # Additional items to remove from generated loot tables
     # These are Bukkit Material enum names
     # When inherit-detection-items is false, this becomes the complete loot table block list
@@ -85,12 +91,12 @@ anti-netherite:
       - NETHERITE_AXE
       - NETHERITE_SHOVEL
       - NETHERITE_HOE
-      - NETHERITE_SPEAR
+      # - NETHERITE_SPEAR # uncomment depending on version, should be covered by pattern matching
       - NETHERITE_HELMET
       - NETHERITE_CHESTPLATE
       - NETHERITE_LEGGINGS
       - NETHERITE_BOOTS
-      # - NETHERITE_HORSE_ARMOR # uncomment depending on version, should be covered by pattern matching
+      # - NETHERITE_HORSE_ARMOR # same as above
       # - NETHERITE_NAUTILUS_ARMOR # same as above
       - NETHERITE_BLOCK
       - NETHERITE_UPGRADE_SMITHING_TEMPLATE

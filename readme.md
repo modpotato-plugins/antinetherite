@@ -110,6 +110,12 @@ anti-netherite:
     # If false, only loot-tables.items is used for loot table filtering
     inherit-detection-items: true
 
+    # Should loot table filtering use name matching to detect blocked items?
+    # If true, any material whose name contains "NETHERITE" will be blocked from loot tables
+    # This operates independently of inherit-detection-items — it always runs a Material scan
+    # for loot tables when enabled, regardless of whether detection items are inherited
+    use-name-matching: true
+
     # Additional items to remove from generated loot tables
     # These are Bukkit Material enum names
     # When inherit-detection-items is false, this becomes the complete loot table block list
@@ -121,12 +127,12 @@ anti-netherite:
       - NETHERITE_AXE
       - NETHERITE_SHOVEL
       - NETHERITE_HOE
-      - NETHERITE_SPEAR
+      # - NETHERITE_SPEAR # uncomment depending on version, should be covered by pattern matching
       - NETHERITE_HELMET
       - NETHERITE_CHESTPLATE
       - NETHERITE_LEGGINGS
       - NETHERITE_BOOTS
-      # - NETHERITE_HORSE_ARMOR # uncomment depending on version, should be covered by pattern matching
+      # - NETHERITE_HORSE_ARMOR # same as above
       # - NETHERITE_NAUTILUS_ARMOR # same as above
       - NETHERITE_BLOCK
       - NETHERITE_UPGRADE_SMITHING_TEMPLATE
@@ -306,6 +312,7 @@ Every setting in the configuration file can be adjusted through these commands. 
 **Loot table settings:**
 - `loot-tables.remove-blocked-items` - Enable/disable removing blocked Netherite items from generated loot tables (true/false)
 - `loot-tables.inherit-detection-items` - Enable/disable inheriting the main `detection.items` list for loot table filtering (true/false)
+- `loot-tables.use-name-matching` - Enable/disable name matching for loot table filtering, operating independently of `inherit-detection-items` (true/false)
 
 **Ancient debris settings:**
 - `ancient-debris.replace-when-mined` - Enable/disable replacing Ancient Debris with Netherrack when mined (true/false)
@@ -383,7 +390,7 @@ The plugin can prevent players from using Netherite items in several ways:
    - Prevent picking up Netherite items from the ground
    - Remove or prevent dropping Netherite items
 
-3. **Loot Table Filtering**: The plugin can remove blocked Netherite items from generated loot tables before the loot is placed. By default, loot filtering inherits the main detection list and preserves `ANCIENT_DEBRIS`, `NETHERITE_SCRAP`, and `NETHERITE_INGOT` so servers can block generated gear without wiping resource-style loot.
+3. **Loot Table Filtering**: The plugin can remove blocked Netherite items from generated loot tables before the loot is placed. By default, loot filtering inherits the main detection list, uses name matching to catch any material containing "NETHERITE" (including items from newer game versions), and preserves `ANCIENT_DEBRIS`, `NETHERITE_SCRAP`, and `NETHERITE_INGOT` so servers can block generated gear without wiping resource-style loot. Name matching for loot tables is controlled independently by `loot-tables.use-name-matching`.
 
 4. **Usage Prevention**: The plugin can prevent players from using Netherite items:
    - Cancel crafting of Netherite items

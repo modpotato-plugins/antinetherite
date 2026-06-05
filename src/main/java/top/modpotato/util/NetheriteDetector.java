@@ -65,6 +65,16 @@ public class NetheriteDetector {
 
         addConfiguredItems(config.getLootTableItemsList(), lootTableItemNames, lootTableItemMaterials);
         addConfiguredItems(config.getLootTablePreservedItemsList(), lootTablePreservedItemNames, lootTablePreservedItemMaterials);
+
+        // Apply loot-table-specific name matching independently of detection inheritance
+        if (config.isLootTablesUseNameMatching()) {
+            for (Material material : Material.values()) {
+                if (material.name().contains("NETHERITE")) {
+                    lootTableItemMaterials.add(material);
+                    lootTableItemNames.add(material.name());
+                }
+            }
+        }
     }
     
     /**
@@ -94,7 +104,7 @@ public class NetheriteDetector {
             return false;
         }
 
-        return matchesConfiguredItem(item, lootTableItemMaterials, lootTableItemNames, config.isUseNameMatching());
+        return matchesConfiguredItem(item, lootTableItemMaterials, lootTableItemNames, config.isLootTablesUseNameMatching());
     }
 
     private void addConfiguredItems(List<String> configuredItems, Set<String> names, Set<Material> materials) {

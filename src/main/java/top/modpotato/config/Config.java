@@ -70,6 +70,7 @@ public class Config {
     // Loot table settings
     private boolean removeLootTableItems;
     private boolean lootTablesInheritDetectionItems;
+    private boolean lootTablesUseNameMatching;
     private List<String> lootTableItemsList;
     private List<String> lootTablePreservedItemsList;
     
@@ -141,10 +142,12 @@ public class Config {
         // Load loot table settings
         shouldSaveConfig |= ensureDefault(config, "anti-netherite.loot-tables.remove-blocked-items", true);
         shouldSaveConfig |= ensureDefault(config, "anti-netherite.loot-tables.inherit-detection-items", true);
+        shouldSaveConfig |= ensureDefault(config, "anti-netherite.loot-tables.use-name-matching", true);
         shouldSaveConfig |= ensureDefault(config, "anti-netherite.loot-tables.items", new ArrayList<>(DEFAULT_LOOT_TABLE_ITEMS));
         shouldSaveConfig |= ensureDefault(config, "anti-netherite.loot-tables.preserve-items", new ArrayList<>(DEFAULT_LOOT_TABLE_PRESERVED_ITEMS));
         removeLootTableItems = config.getBoolean("anti-netherite.loot-tables.remove-blocked-items", true);
         lootTablesInheritDetectionItems = config.getBoolean("anti-netherite.loot-tables.inherit-detection-items", true);
+        lootTablesUseNameMatching = config.getBoolean("anti-netherite.loot-tables.use-name-matching", true);
         lootTableItemsList = config.getStringList("anti-netherite.loot-tables.items");
         lootTablePreservedItemsList = config.getStringList("anti-netherite.loot-tables.preserve-items");
         
@@ -290,6 +293,14 @@ public class Config {
      */
     public boolean isLootTablesInheritDetectionItems() {
         return lootTablesInheritDetectionItems;
+    }
+
+    /**
+     * Gets whether loot table filtering should use name matching to detect blocked items
+     * @return true if loot table filtering uses name matching, false otherwise
+     */
+    public boolean isLootTablesUseNameMatching() {
+        return lootTablesUseNameMatching;
     }
 
     /**

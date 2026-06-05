@@ -54,6 +54,7 @@ public class AntiNetheriteCommand implements CommandExecutor, TabCompleter {
         // Loot table settings
         SETTINGS_MAP.put("remove-loot-table-items", "anti-netherite.loot-tables.remove-blocked-items");
         SETTINGS_MAP.put("loot-table-inherit-detection-items", "anti-netherite.loot-tables.inherit-detection-items");
+        SETTINGS_MAP.put("loot-table-use-name-matching", "anti-netherite.loot-tables.use-name-matching");
         
         // Ancient debris settings
         SETTINGS_MAP.put("replace-when-mined", "anti-netherite.ancient-debris.replace-when-mined");
@@ -350,7 +351,7 @@ public class AntiNetheriteCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(Component.text("  cancel-pickup, remove-dropped").color(NamedTextColor.GRAY));
 
         sender.sendMessage(Component.text("Loot table settings:").color(NamedTextColor.YELLOW));
-        sender.sendMessage(Component.text("  loot-tables.remove-blocked-items, loot-tables.inherit-detection-items").color(NamedTextColor.GRAY));
+        sender.sendMessage(Component.text("  loot-tables.remove-blocked-items, loot-tables.inherit-detection-items, loot-tables.use-name-matching").color(NamedTextColor.GRAY));
         
         sender.sendMessage(Component.text("Ancient debris settings:").color(NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("  replace-when-mined, replace-on-chunk-load").color(NamedTextColor.GRAY));
@@ -417,6 +418,7 @@ public class AntiNetheriteCommand implements CommandExecutor, TabCompleter {
                 // Add loot table settings
                 completions.add("loot-tables.remove-blocked-items");
                 completions.add("loot-tables.inherit-detection-items");
+                completions.add("loot-tables.use-name-matching");
                 completions.add("loot-tables.items");
                 completions.add("loot-tables.preserve-items");
                 
@@ -649,6 +651,9 @@ public class AntiNetheriteCommand implements CommandExecutor, TabCompleter {
             case "loot-tables.inherit-detection-items":
             case "loot-table-inherit-detection-items":
                 return "anti-netherite.loot-tables.inherit-detection-items";
+            case "loot-tables.use-name-matching":
+            case "loot-table-use-name-matching":
+                return "anti-netherite.loot-tables.use-name-matching";
                 
             // Ancient debris settings
             case "ancient-debris.replace-when-mined":
