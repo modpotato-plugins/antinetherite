@@ -3,12 +3,56 @@ package top.modpotato.config;
 import org.bukkit.configuration.file.FileConfiguration;
 import top.modpotato.Main;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Configuration manager for AntiNetherite plugin
  */
 public class Config {
+    private static final List<String> DEFAULT_NETHERITE_ITEMS = List.of(
+            "NETHERITE_SWORD",
+            "NETHERITE_PICKAXE",
+            "NETHERITE_AXE",
+            "NETHERITE_SHOVEL",
+            "NETHERITE_HOE",
+            "NETHERITE_SPEAR",
+            "NETHERITE_HELMET",
+            "NETHERITE_CHESTPLATE",
+            "NETHERITE_LEGGINGS",
+            "NETHERITE_BOOTS",
+            "NETHERITE_HORSE_ARMOR",
+            "NETHERITE_NAUTILUS_ARMOR",
+            "NETHERITE_BLOCK",
+            "NETHERITE_INGOT",
+            "NETHERITE_SCRAP",
+            "NETHERITE_UPGRADE_SMITHING_TEMPLATE",
+            "ANCIENT_DEBRIS"
+    );
+
+    private static final List<String> DEFAULT_LOOT_TABLE_ITEMS = List.of(
+            "NETHERITE_SWORD",
+            "NETHERITE_PICKAXE",
+            "NETHERITE_AXE",
+            "NETHERITE_SHOVEL",
+            "NETHERITE_HOE",
+            "NETHERITE_SPEAR",
+            "NETHERITE_HELMET",
+            "NETHERITE_CHESTPLATE",
+            "NETHERITE_LEGGINGS",
+            "NETHERITE_BOOTS",
+            "NETHERITE_HORSE_ARMOR",
+            "NETHERITE_NAUTILUS_ARMOR",
+            "NETHERITE_BLOCK",
+            "NETHERITE_UPGRADE_SMITHING_TEMPLATE"
+    );
+
+    private static final List<String> DEFAULT_LOOT_TABLE_PRESERVED_ITEMS = List.of(
+            "ANCIENT_DEBRIS",
+            "NETHERITE_SCRAP",
+            "NETHERITE_INGOT"
+    );
+
     private final Main plugin;
     
     // Configuration values
@@ -22,6 +66,12 @@ public class Config {
     private boolean removeDropped;
     private boolean cancelInventoryMove;
     private boolean cancelContainerTransfer;
+
+    // Loot table settings
+    private boolean removeLootTableItems;
+    private boolean lootTablesInheritDetectionItems;
+    private List<String> lootTableItemsList;
+    private List<String> lootTablePreservedItemsList;
     
     // Global settings
     private boolean enableDestructiveActions;
@@ -65,9 +115,10 @@ public class Config {
     public void reload() {
         plugin.reloadConfig();
         FileConfiguration config = plugin.getConfig();
+        boolean shouldSaveConfig = false;
         
         // Load global settings
-        enableDestructiveActions = config.getBoolean("anti-netherite.global.enable-destructive-actions", true);
+        enableDestructiveActions = config.getBoolean("anti-netherite.global.enable-destructive-actions", false);
         
         // Load timing settings
         delay = config.getInt("anti-netherite.timing.delay", 1);
@@ -76,7 +127,7 @@ public class Config {
         // Load inventory protection settings
         clearNetherite = config.getBoolean("anti-netherite.inventory.clear", false);
         cancelInventoryMove = config.getBoolean("anti-netherite.inventory.cancel-move", true);
-    cancelContainerTransfer = config.getBoolean("anti-netherite.inventory.cancel-container-transfer", true);
+        cancelContainerTransfer = config.getBoolean("anti-netherite.inventory.cancel-container-transfer", false);
         
         // Load item interaction settings
         cancelCraft = config.getBoolean("anti-netherite.interaction.cancel-craft", true);
@@ -85,14 +136,24 @@ public class Config {
         
         // Load item handling settings
         cancelPickup = config.getBoolean("anti-netherite.item-handling.cancel-pickup", true);
-        removeDropped = config.getBoolean("anti-netherite.item-handling.remove-dropped", true);
+        removeDropped = config.getBoolean("anti-netherite.item-handling.remove-dropped", false);
+
+        // Load loot table settings
+        shouldSaveConfig |= ensureDefault(config, "anti-netherite.loot-tables.remove-blocked-items", true);
+        shouldSaveConfig |= ensureDefault(config, "anti-netherite.loot-tables.inherit-detection-items", true);
+        shouldSaveConfig |= ensureDefault(config, "anti-netherite.loot-tables.items", new ArrayList<>(DEFAULT_LOOT_TABLE_ITEMS));
+        shouldSaveConfig |= ensureDefault(config, "anti-netherite.loot-tables.preserve-items", new ArrayList<>(DEFAULT_LOOT_TABLE_PRESERVED_ITEMS));
+        removeLootTableItems = config.getBoolean("anti-netherite.loot-tables.remove-blocked-items", true);
+        lootTablesInheritDetectionItems = config.getBoolean("anti-netherite.loot-tables.inherit-detection-items", true);
+        lootTableItemsList = config.getStringList("anti-netherite.loot-tables.items");
+        lootTablePreservedItemsList = config.getStringList("anti-netherite.loot-tables.preserve-items");
         
         // Load Ancient Debris settings
         replaceWhenMined = config.getBoolean("anti-netherite.ancient-debris.replace-when-mined", true);
-        replaceOnChunkLoad = config.getBoolean("anti-netherite.ancient-debris.replace-on-chunk-load", true);
+        replaceOnChunkLoad = config.getBoolean("anti-netherite.ancient-debris.replace-on-chunk-load", false);
         onlyReplaceGeneratedChunks = config.getBoolean("anti-netherite.ancient-debris.only-replace-generated-chunks", true);
-        ensureChunksLoaded = config.getBoolean("anti-netherite.ancient-debris.ensure-chunks-loaded", true);
-        saveReplacedLocations = config.getBoolean("anti-netherite.ancient-debris.save-replaced-locations", true);
+        ensureChunksLoaded = config.getBoolean("anti-netherite.ancient-debris.ensure-chunks-loaded", false);
+        saveReplacedLocations = config.getBoolean("anti-netherite.ancient-debris.save-replaced-locations", false);
         
         // Load performance settings
         restoreDebrisOnDisable = config.getBoolean("anti-netherite.performance.restore-debris-on-disable", false);
@@ -101,10 +162,10 @@ public class Config {
         
         // Load advanced settings
         maxLocationsPerWorld = config.getInt("anti-netherite.advanced.max-locations-per-world", 10000);
-        commandCooldownSeconds = config.getInt("anti-netherite.advanced.command-cooldown-seconds", 5);
+        commandCooldownSeconds = config.getInt("anti-netherite.advanced.command-cooldown-seconds", 1);
         logDebrisReplacements = config.getBoolean("anti-netherite.advanced.log-debris-replacements", true);
         logInventoryRemovals = config.getBoolean("anti-netherite.advanced.log-inventory-removals", true);
-        ignoreCreativeSpectator = config.getBoolean("anti-netherite.advanced.ignore-creative-spectator", false);
+        ignoreCreativeSpectator = config.getBoolean("anti-netherite.advanced.ignore-creative-spectator", true);
         notifyPlayers = config.getBoolean("anti-netherite.advanced.notify-players", true);
         
         // Load Netherite detection settings
@@ -113,23 +174,25 @@ public class Config {
         
         // If the list is empty, add default Netherite items
         if (netheriteItemsList.isEmpty()) {
-            netheriteItemsList.add("NETHERITE_SWORD");
-            netheriteItemsList.add("NETHERITE_PICKAXE");
-            netheriteItemsList.add("NETHERITE_AXE");
-            netheriteItemsList.add("NETHERITE_SHOVEL");
-            netheriteItemsList.add("NETHERITE_HOE");
-            netheriteItemsList.add("NETHERITE_HELMET");
-            netheriteItemsList.add("NETHERITE_CHESTPLATE");
-            netheriteItemsList.add("NETHERITE_LEGGINGS");
-            netheriteItemsList.add("NETHERITE_BOOTS");
-            netheriteItemsList.add("NETHERITE_BLOCK");
-            netheriteItemsList.add("NETHERITE_INGOT");
-            netheriteItemsList.add("NETHERITE_SCRAP");
+            netheriteItemsList = new ArrayList<>(DEFAULT_NETHERITE_ITEMS);
             
             // Save the default list to config
             config.set("anti-netherite.detection.items", netheriteItemsList);
+            shouldSaveConfig = true;
+        }
+
+        if (shouldSaveConfig) {
             plugin.saveConfig();
         }
+    }
+
+    private boolean ensureDefault(FileConfiguration config, String path, Object defaultValue) {
+        if (config.contains(path)) {
+            return false;
+        }
+
+        config.set(path, defaultValue);
+        return true;
     }
     
     /**
@@ -211,6 +274,38 @@ public class Config {
      */
     public boolean isCancelContainerTransfer() {
         return cancelContainerTransfer;
+    }
+
+    /**
+     * Gets whether generated loot table contents should be filtered for blocked items
+     * @return true if blocked loot table items should be removed, false otherwise
+     */
+    public boolean isRemoveLootTableItems() {
+        return removeLootTableItems;
+    }
+
+    /**
+     * Gets whether loot table filtering should include the main detection item list
+     * @return true if loot table filtering inherits detection items, false otherwise
+     */
+    public boolean isLootTablesInheritDetectionItems() {
+        return lootTablesInheritDetectionItems;
+    }
+
+    /**
+     * Gets the loot-table-specific blocked item names
+     * @return The loot-table-specific blocked item names
+     */
+    public List<String> getLootTableItemsList() {
+        return lootTableItemsList;
+    }
+
+    /**
+     * Gets item names that should be preserved when filtering generated loot
+     * @return The loot table preservation item names
+     */
+    public List<String> getLootTablePreservedItemsList() {
+        return lootTablePreservedItemsList;
     }
     
     /**

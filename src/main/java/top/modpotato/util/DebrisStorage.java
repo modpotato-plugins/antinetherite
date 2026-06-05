@@ -15,6 +15,7 @@ import top.modpotato.restoration.RestorationSession;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -42,7 +43,7 @@ public class DebrisStorage {
     private final Map<UUID, List<String>> replacedLocations = new ConcurrentHashMap<>();
 
     // Track if storage is currently being saved to prevent concurrent modifications
-    private boolean isSaving = false;
+    private volatile boolean isSaving = false;
 
     /**
      * Creates a new DebrisStorage instance
@@ -92,7 +93,7 @@ public class DebrisStorage {
                         locations = locations.subList(0, maxLocations);
                     }
 
-                    replacedLocations.put(uuid, new ArrayList<>(locations));
+                    replacedLocations.put(uuid, Collections.synchronizedList(new ArrayList<>(locations)));
                 } catch (IllegalArgumentException e) {
                     plugin.getLogger().warning("Invalid UUID in debris_storage.yml: " + worldUUID);
                 }
@@ -127,10 +128,6 @@ public class DebrisStorage {
      * Saves the storage file
      */
     public synchronized void saveStorage() {
-        if (plugin.isShuttingDown()) {
-            return;
-        }
-
         // Skip if we're not saving replaced locations
         if (!config.isSaveReplacedLocations()) {
             return;
@@ -144,7 +141,10 @@ public class DebrisStorage {
 
             // Save all replaced locations
             for (Map.Entry<UUID, List<String>> entry : replacedLocations.entrySet()) {
-                storage.set(entry.getKey().toString(), entry.getValue());
+                List<String> worldLocations = entry.getValue();
+                synchronized (worldLocations) {
+                    storage.set(entry.getKey().toString(), new ArrayList<>(worldLocations));
+                }
             }
 
             // Save the file
@@ -179,27 +179,29 @@ public class DebrisStorage {
         String locString = serializeLocation(location);
 
         // Initialize the list if it doesn't exist
-        replacedLocations.computeIfAbsent(worldUUID, k -> new ArrayList<>());
+        replacedLocations.computeIfAbsent(worldUUID, k -> Collections.synchronizedList(new ArrayList<>()));
 
         // Check if we've reached the maximum number of locations for this world
         List<String> worldLocations = replacedLocations.get(worldUUID);
         int maxLocations = config.getMaxLocationsPerWorld();
-        if (maxLocations != -1 && worldLocations.size() >= maxLocations) {
-            plugin.getLogger().warning("Maximum number of Ancient Debris locations reached for world " +
-                    world.getName() + ". Skipping location: " + locString);
-            return false;
-        }
+        synchronized (worldLocations) {
+            if (maxLocations != -1 && worldLocations.size() >= maxLocations) {
+                plugin.getLogger().warning("Maximum number of Ancient Debris locations reached for world " +
+                        world.getName() + ". Skipping location: " + locString);
+                return false;
+            }
 
-        // Add the location if it doesn't already exist
-        if (!worldLocations.contains(locString)) {
+            // Add the location if it doesn't already exist
+            if (worldLocations.contains(locString)) {
+                return false;
+            }
+
             worldLocations.add(locString);
-
-            // Save the storage asynchronously
-            saveStorageAsync();
-            return true;
         }
 
-        return false;
+        // Save the storage asynchronously
+        saveStorageAsync();
+        return true;
     }
 
     /**
@@ -216,8 +218,8 @@ public class DebrisStorage {
         UUID worldUUID = location.getWorld().getUID();
         String locString = serializeLocation(location);
 
-        return replacedLocations.containsKey(worldUUID) &&
-                replacedLocations.get(worldUUID).contains(locString);
+        List<String> worldLocations = replacedLocations.get(worldUUID);
+        return worldLocations != null && worldLocations.contains(locString);
     }
 
     /**
@@ -261,9 +263,10 @@ public class DebrisStorage {
             if (world != null) {
                 // Collect results in a thread-safe way
                 ConcurrentLinkedQueue<String> toRemove = new ConcurrentLinkedQueue<>();
-                CountDownLatch latch = new CountDownLatch(entry.getValue().size());
+                List<String> locations = snapshotLocations(entry.getValue());
+                CountDownLatch latch = new CountDownLatch(locations.size());
 
-                for (String locString : entry.getValue()) {
+                for (String locString : locations) {
                     try {
                         Location location = deserializeLocation(world, locString);
 
@@ -340,7 +343,7 @@ public class DebrisStorage {
         UUID worldUUID = world.getUID();
 
         if (replacedLocations.containsKey(worldUUID)) {
-            List<String> locations = new ArrayList<>(replacedLocations.get(worldUUID));
+            List<String> locations = snapshotLocations(replacedLocations.get(worldUUID));
             ConcurrentLinkedQueue<String> toRemove = new ConcurrentLinkedQueue<>();
             CountDownLatch latch = new CountDownLatch(locations.size());
 
@@ -449,7 +452,7 @@ public class DebrisStorage {
         for (Map.Entry<UUID, List<String>> entry : replacedLocations.entrySet()) {
             World world = Bukkit.getWorld(entry.getKey());
             if (world != null) {
-                for (String locString : entry.getValue()) {
+                for (String locString : snapshotLocations(entry.getValue())) {
                     try {
                         Location loc = deserializeLocation(world, locString);
                         uniqueChunks.add(getChunkKey(loc, true));
@@ -488,7 +491,7 @@ public class DebrisStorage {
         }
 
         Set<String> uniqueChunks = new HashSet<>();
-        for (String locString : locations) {
+        for (String locString : snapshotLocations(locations)) {
             try {
                 Location loc = deserializeLocation(world, locString);
                 uniqueChunks.add(getChunkKey(loc, false));
@@ -516,7 +519,7 @@ public class DebrisStorage {
             for (Map.Entry<UUID, List<String>> entry : replacedLocations.entrySet()) {
                 World world = Bukkit.getWorld(entry.getKey());
                 if (world != null) {
-                    for (String locString : entry.getValue()) {
+                    for (String locString : snapshotLocations(entry.getValue())) {
                         toRestore.add(new LocationRestore(world, locString, entry.getKey()));
                     }
                 }
@@ -524,7 +527,7 @@ public class DebrisStorage {
         } else {
             UUID worldUUID = worldFilter.getUID();
             if (replacedLocations.containsKey(worldUUID)) {
-                for (String locString : replacedLocations.get(worldUUID)) {
+                for (String locString : snapshotLocations(replacedLocations.get(worldUUID))) {
                     toRestore.add(new LocationRestore(worldFilter, locString, worldUUID));
                 }
             }
@@ -644,6 +647,12 @@ public class DebrisStorage {
             replacedLocations.remove(worldFilter.getUID());
         }
         saveStorageAsync();
+    }
+
+    private List<String> snapshotLocations(List<String> locations) {
+        synchronized (locations) {
+            return new ArrayList<>(locations);
+        }
     }
 
     private static class LocationRestore {

@@ -8,6 +8,7 @@ import top.modpotato.listeners.CraftListener;
 import top.modpotato.listeners.DropListener;
 import top.modpotato.listeners.EquipListener;
 import top.modpotato.listeners.InventoryMoveListener;
+import top.modpotato.listeners.LootTableListener;
 import top.modpotato.listeners.MiningListener;
 import top.modpotato.listeners.PickupListener;
 import top.modpotato.listeners.ContainerTransferListener;
@@ -35,6 +36,7 @@ public class Main extends JavaPlugin {
     private PickupListener pickupListener;
     private DropListener dropListener;
     private InventoryMoveListener inventoryMoveListener;
+    private LootTableListener lootTableListener;
     private MiningListener miningListener;
     private ContainerTransferListener containerTransferListener;
     private boolean isFolia;
@@ -166,6 +168,11 @@ public class Main extends JavaPlugin {
                 getServer().getPluginManager().registerEvents(containerTransferListener, this);
             }
 
+            if (config.isRemoveLootTableItems()) {
+                lootTableListener = new LootTableListener(netheriteDetector, config);
+                getServer().getPluginManager().registerEvents(lootTableListener, this);
+            }
+
             // Register mining listener if either ancient debris replacement option is
             // enabled
             if (config.isReplaceWhenMined() || config.isReplaceOnChunkLoad()) {
@@ -220,6 +227,11 @@ public class Main extends JavaPlugin {
             if (containerTransferListener != null) {
                 HandlerList.unregisterAll(containerTransferListener);
                 containerTransferListener = null;
+            }
+
+            if (lootTableListener != null) {
+                HandlerList.unregisterAll(lootTableListener);
+                lootTableListener = null;
             }
 
             if (miningListener != null) {

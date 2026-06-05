@@ -16,6 +16,7 @@ The plugin operates in **non-destructive mode by default** (`enable-destructive-
 - Removes dropped Netherite items
 - Prevents moving Netherite items in inventories
 - Blocks automated container (hopper) transfers of Netherite items (configurable, disabled by default due to performance impact)
+- Filters blocked Netherite items out of generated loot tables while preserving configured resource drops
 - Replaces Ancient Debris with Netherrack when mined or generated
 - **Performance-Optimized** - Control whether replaced Ancient Debris is restored on plugin disable
 - **Fine-Grained Control** - Advanced settings for memory usage, logging, and more
@@ -93,7 +94,51 @@ anti-netherite:
     # Should we remove netherite items when dropped?
     # This removes netherite items when players drop them
     remove-dropped: false
-  
+
+  # ==============================
+  # LOOT TABLE SETTINGS
+  # ==============================
+
+  loot-tables:
+    # Should we remove blocked Netherite items from generated loot tables?
+    # This filters the generated loot before it is placed into chests, entities, etc.
+    # It does not remove unrelated loot from the same table
+    remove-blocked-items: true
+
+    # Should loot table filtering inherit the main detection.items block list?
+    # If true, loot-tables.items is added on top of detection.items
+    # If false, only loot-tables.items is used for loot table filtering
+    inherit-detection-items: true
+
+    # Additional items to remove from generated loot tables
+    # These are Bukkit Material enum names
+    # When inherit-detection-items is false, this becomes the complete loot table block list
+    # Vanilla Minecraft does not currently include Netherite wolf armor; add
+    # NETHERITE_WOLF_ARMOR here if your server software or custom content provides it
+    items:
+      - NETHERITE_SWORD
+      - NETHERITE_PICKAXE
+      - NETHERITE_AXE
+      - NETHERITE_SHOVEL
+      - NETHERITE_HOE
+      - NETHERITE_SPEAR
+      - NETHERITE_HELMET
+      - NETHERITE_CHESTPLATE
+      - NETHERITE_LEGGINGS
+      - NETHERITE_BOOTS
+      - NETHERITE_HORSE_ARMOR
+      - NETHERITE_NAUTILUS_ARMOR
+      - NETHERITE_BLOCK
+      - NETHERITE_UPGRADE_SMITHING_TEMPLATE
+
+    # Items that should never be removed by loot table filtering
+    # This lets servers block generated Netherite gear while still allowing
+    # resource-style loot such as Ancient Debris, scraps, and ingots
+    preserve-items:
+      - ANCIENT_DEBRIS
+      - NETHERITE_SCRAP
+      - NETHERITE_INGOT
+
   # ==============================
   # ANCIENT DEBRIS SETTINGS
   # ==============================
@@ -200,13 +245,17 @@ anti-netherite:
       - NETHERITE_AXE
       - NETHERITE_SHOVEL
       - NETHERITE_HOE
+      - NETHERITE_SPEAR
       - NETHERITE_HELMET
       - NETHERITE_CHESTPLATE
       - NETHERITE_LEGGINGS
       - NETHERITE_BOOTS
+      - NETHERITE_HORSE_ARMOR
+      - NETHERITE_NAUTILUS_ARMOR
       - NETHERITE_BLOCK
       - NETHERITE_INGOT
       - NETHERITE_SCRAP
+      - NETHERITE_UPGRADE_SMITHING_TEMPLATE
       - ANCIENT_DEBRIS
   
   # ==============================
@@ -254,6 +303,10 @@ Every setting in the configuration file can be adjusted through these commands. 
 - `item-handling.cancel-pickup` - Enable/disable preventing picking up Netherite items (true/false)
 - `item-handling.remove-dropped` - Enable/disable removing dropped Netherite items (true/false)
 
+**Loot table settings:**
+- `loot-tables.remove-blocked-items` - Enable/disable removing blocked Netherite items from generated loot tables (true/false)
+- `loot-tables.inherit-detection-items` - Enable/disable inheriting the main `detection.items` list for loot table filtering (true/false)
+
 **Ancient debris settings:**
 - `ancient-debris.replace-when-mined` - Enable/disable replacing Ancient Debris with Netherrack when mined (true/false)
 - `ancient-debris.replace-on-chunk-load` - Enable/disable replacing Ancient Debris with Netherrack when chunks are loaded (true/false)
@@ -285,6 +338,12 @@ Special commands for managing the Netherite items list:
 - `/antinetherite get detection.items` - List all items considered as Netherite items
 - `/antinetherite set detection.items add <item>` - Add an item to the Netherite items list
 - `/antinetherite set detection.items remove <item>` - Remove an item from the Netherite items list
+- `/antinetherite get loot-tables.items` - List items removed from generated loot tables
+- `/antinetherite set loot-tables.items add <item>` - Add an item to the loot table block list
+- `/antinetherite set loot-tables.items remove <item>` - Remove an item from the loot table block list
+- `/antinetherite get loot-tables.preserve-items` - List items preserved in generated loot tables
+- `/antinetherite set loot-tables.preserve-items add <item>` - Add an item to the loot table preserve list
+- `/antinetherite set loot-tables.preserve-items remove <item>` - Remove an item from the loot table preserve list
 
 ## Permissions
 
@@ -324,7 +383,9 @@ The plugin can prevent players from using Netherite items in several ways:
    - Prevent picking up Netherite items from the ground
    - Remove or prevent dropping Netherite items
 
-3. **Usage Prevention**: The plugin can prevent players from using Netherite items:
+3. **Loot Table Filtering**: The plugin can remove blocked Netherite items from generated loot tables before the loot is placed. By default, loot filtering inherits the main detection list and preserves `ANCIENT_DEBRIS`, `NETHERITE_SCRAP`, and `NETHERITE_INGOT` so servers can block generated gear without wiping resource-style loot.
+
+4. **Usage Prevention**: The plugin can prevent players from using Netherite items:
    - Cancel crafting of Netherite items
    - Prevent equipping Netherite armor
    - Prevent attacking with Netherite weapons

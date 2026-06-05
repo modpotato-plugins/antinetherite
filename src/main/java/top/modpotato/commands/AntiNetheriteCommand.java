@@ -17,6 +17,7 @@ import top.modpotato.restoration.RestorationSession;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -49,12 +50,21 @@ public class AntiNetheriteCommand implements CommandExecutor, TabCompleter {
         // Item handling settings
         SETTINGS_MAP.put("cancel-pickup", "anti-netherite.item-handling.cancel-pickup");
         SETTINGS_MAP.put("remove-dropped", "anti-netherite.item-handling.remove-dropped");
+
+        // Loot table settings
+        SETTINGS_MAP.put("remove-loot-table-items", "anti-netherite.loot-tables.remove-blocked-items");
+        SETTINGS_MAP.put("loot-table-inherit-detection-items", "anti-netherite.loot-tables.inherit-detection-items");
         
         // Ancient debris settings
         SETTINGS_MAP.put("replace-when-mined", "anti-netherite.ancient-debris.replace-when-mined");
         SETTINGS_MAP.put("replace-on-chunk-load", "anti-netherite.ancient-debris.replace-on-chunk-load");
         SETTINGS_MAP.put("only-replace-generated-chunks", "anti-netherite.ancient-debris.only-replace-generated-chunks");
         SETTINGS_MAP.put("ensure-chunks-loaded", "anti-netherite.ancient-debris.ensure-chunks-loaded");
+        SETTINGS_MAP.put("save-replaced-locations", "anti-netherite.ancient-debris.save-replaced-locations");
+
+        // Advanced settings
+        SETTINGS_MAP.put("ignore-creative-spectator", "anti-netherite.advanced.ignore-creative-spectator");
+        SETTINGS_MAP.put("notify-players", "anti-netherite.advanced.notify-players");
         
         // Detection settings
         SETTINGS_MAP.put("detection.use-name-matching", "anti-netherite.detection.use-name-matching");
@@ -85,7 +95,7 @@ public class AntiNetheriteCommand implements CommandExecutor, TabCompleter {
                 return handleRestoreFeedback(sender, args);
             case "restore-debris":
                 // Get the configured cooldown in milliseconds
-                int cooldownSeconds = plugin.getConfig().getInt("anti-netherite.advanced.command-cooldown-seconds", 5);
+                int cooldownSeconds = plugin.getConfig().getInt("anti-netherite.advanced.command-cooldown-seconds", 1);
                 long cooldownMs = cooldownSeconds * 1000L;
                 
                 // Check for cooldown per sender to prevent command spam
@@ -223,33 +233,34 @@ public class AntiNetheriteCommand implements CommandExecutor, TabCompleter {
                 
                 String settingName = args[1].toLowerCase();
                 
-                // Special handling for detection.items add/remove
-                if (settingName.equals("detection.items")) {
+                // Special handling for list settings add/remove
+                String listPath = getListConfigPath(settingName);
+                if (listPath != null) {
                     if (args.length < 4) {
-                        sender.sendMessage(Component.text("Usage: /antinetherite set detection.items <add|remove> <item>").color(NamedTextColor.RED));
+                        sender.sendMessage(Component.text("Usage: /antinetherite set " + settingName + " <add|remove> <item>").color(NamedTextColor.RED));
                         return true;
                     }
                     
                     String action = args[2].toLowerCase();
-                    String item = args[3].toUpperCase();
+                    String item = args[3].toUpperCase(Locale.ROOT);
                     
-                    List<String> items = getDetectionItems();
+                    List<String> items = getStringList(listPath);
                     
                     if (action.equals("add")) {
                         if (!items.contains(item)) {
                             items.add(item);
-                            plugin.updateConfig("anti-netherite.detection.items", items);
-                            sender.sendMessage(Component.text("Added " + item + " to the Netherite items list.").color(NamedTextColor.GREEN));
+                            plugin.updateConfig(listPath, items);
+                            sender.sendMessage(Component.text("Added " + item + " to " + settingName + ".").color(NamedTextColor.GREEN));
                         } else {
-                            sender.sendMessage(Component.text(item + " is already in the Netherite items list.").color(NamedTextColor.YELLOW));
+                            sender.sendMessage(Component.text(item + " is already in " + settingName + ".").color(NamedTextColor.YELLOW));
                         }
                     } else if (action.equals("remove")) {
                         if (items.contains(item)) {
                             items.remove(item);
-                            plugin.updateConfig("anti-netherite.detection.items", items);
-                            sender.sendMessage(Component.text("Removed " + item + " from the Netherite items list.").color(NamedTextColor.GREEN));
+                            plugin.updateConfig(listPath, items);
+                            sender.sendMessage(Component.text("Removed " + item + " from " + settingName + ".").color(NamedTextColor.GREEN));
                         } else {
-                            sender.sendMessage(Component.text(item + " is not in the Netherite items list.").color(NamedTextColor.YELLOW));
+                            sender.sendMessage(Component.text(item + " is not in " + settingName + ".").color(NamedTextColor.YELLOW));
                         }
                     } else {
                         sender.sendMessage(Component.text("Invalid action: " + action + ". Use 'add' or 'remove'.").color(NamedTextColor.RED));
@@ -286,8 +297,9 @@ public class AntiNetheriteCommand implements CommandExecutor, TabCompleter {
                     } else if (currentValue instanceof Integer) {
                         // Integer setting
                         int intValue = Integer.parseInt(settingValue);
-                        if (intValue < 1) {
-                            sender.sendMessage(Component.text("Value must be at least 1.").color(NamedTextColor.RED));
+                        int minimumValue = allowsUnlimitedValue(settingPath) ? -1 : 1;
+                        if (intValue < minimumValue) {
+                            sender.sendMessage(Component.text("Value must be at least " + minimumValue + ".").color(NamedTextColor.RED));
                             return true;
                         }
                         plugin.updateConfig(settingPath, intValue);
@@ -336,10 +348,16 @@ public class AntiNetheriteCommand implements CommandExecutor, TabCompleter {
         
         sender.sendMessage(Component.text("Item handling settings:").color(NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("  cancel-pickup, remove-dropped").color(NamedTextColor.GRAY));
+
+        sender.sendMessage(Component.text("Loot table settings:").color(NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("  loot-tables.remove-blocked-items, loot-tables.inherit-detection-items").color(NamedTextColor.GRAY));
         
         sender.sendMessage(Component.text("Ancient debris settings:").color(NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("  replace-when-mined, replace-on-chunk-load").color(NamedTextColor.GRAY));
-        sender.sendMessage(Component.text("  only-replace-generated-chunks, ensure-chunks-loaded").color(NamedTextColor.GRAY));
+        sender.sendMessage(Component.text("  only-replace-generated-chunks, ensure-chunks-loaded, save-replaced-locations").color(NamedTextColor.GRAY));
+
+        sender.sendMessage(Component.text("Advanced settings:").color(NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("  ignore-creative-spectator, notify-players").color(NamedTextColor.GRAY));
         
         sender.sendMessage(Component.text("Detection settings:").color(NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("  detection.use-name-matching").color(NamedTextColor.GRAY));
@@ -351,6 +369,10 @@ public class AntiNetheriteCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(Component.text("/antinetherite get detection.items - List all Netherite items").color(NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("/antinetherite set detection.items add <item> - Add an item to the list").color(NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("/antinetherite set detection.items remove <item> - Remove an item from the list").color(NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("/antinetherite get loot-tables.items - List loot table blocked items").color(NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("/antinetherite set loot-tables.items add <item> - Add an item to the loot table block list").color(NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("/antinetherite set loot-tables.preserve-items add <item> - Preserve an item in generated loot").color(NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("/antinetherite set loot-tables.preserve-items remove <item> - Stop preserving an item in generated loot").color(NamedTextColor.YELLOW));
     }
 
     @Override
@@ -391,12 +413,19 @@ public class AntiNetheriteCommand implements CommandExecutor, TabCompleter {
                 // Add item handling settings
                 completions.add("item-handling.cancel-pickup");
                 completions.add("item-handling.remove-dropped");
+
+                // Add loot table settings
+                completions.add("loot-tables.remove-blocked-items");
+                completions.add("loot-tables.inherit-detection-items");
+                completions.add("loot-tables.items");
+                completions.add("loot-tables.preserve-items");
                 
                 // Add ancient debris settings
                 completions.add("ancient-debris.replace-when-mined");
                 completions.add("ancient-debris.replace-on-chunk-load");
                 completions.add("ancient-debris.only-replace-generated-chunks");
                 completions.add("ancient-debris.ensure-chunks-loaded");
+                completions.add("ancient-debris.save-replaced-locations");
                 
                 // Add performance settings
                 completions.add("performance.restore-debris-on-disable");
@@ -408,6 +437,8 @@ public class AntiNetheriteCommand implements CommandExecutor, TabCompleter {
                 completions.add("advanced.command-cooldown-seconds");
                 completions.add("advanced.log-debris-replacements");
                 completions.add("advanced.log-inventory-removals");
+                completions.add("advanced.ignore-creative-spectator");
+                completions.add("advanced.notify-players");
                 
                 // Add detection settings
                 completions.add("detection.use-name-matching");
@@ -432,8 +463,8 @@ public class AntiNetheriteCommand implements CommandExecutor, TabCompleter {
             if (args[0].equalsIgnoreCase("set")) {
                 String setting = args[1].toLowerCase();
                 
-                // Special handling for detection.items
-                if (setting.equals("detection.items")) {
+                // Special handling for list settings
+                if (getListConfigPath(setting) != null) {
                     completions.add("add");
                     completions.add("remove");
                     return filterCompletions(completions, args[2]);
@@ -447,6 +478,10 @@ public class AntiNetheriteCommand implements CommandExecutor, TabCompleter {
                     setting.contains("restore") || 
                     setting.contains("log") || 
                     setting.contains("use-name") ||
+                    setting.contains("inherit") ||
+                    setting.contains("ignore") ||
+                    setting.contains("notify") ||
+                    setting.contains("save") ||
                     setting.contains("enable-destructive") ||
                     setting.contains("clear")) {
                     completions.add("true");
@@ -537,10 +572,11 @@ public class AntiNetheriteCommand implements CommandExecutor, TabCompleter {
         
         String setting = args[1].toLowerCase();
         
-        // Handle special case for detection.items
-        if (setting.equals("detection.items")) {
-            List<String> items = getDetectionItems();
-            sender.sendMessage(Component.text("Netherite items list:").color(NamedTextColor.GREEN));
+        // Handle special case for list settings
+        String listPath = getListConfigPath(setting);
+        if (listPath != null) {
+            List<String> items = getStringList(listPath);
+            sender.sendMessage(Component.text(setting + ":").color(NamedTextColor.GREEN));
             for (String item : items) {
                 sender.sendMessage(Component.text("- " + item).color(NamedTextColor.YELLOW));
             }
@@ -580,6 +616,9 @@ public class AntiNetheriteCommand implements CommandExecutor, TabCompleter {
             case "inventory.clear":
             case "clear":
                 return "anti-netherite.inventory.clear";
+            case "inventory.cancel-move":
+            case "cancel-inventory-move":
+                return "anti-netherite.inventory.cancel-move";
             case "inventory.cancel-container-transfer":
             case "cancel-container-transfer":
                 return "anti-netherite.inventory.cancel-container-transfer";
@@ -602,6 +641,14 @@ public class AntiNetheriteCommand implements CommandExecutor, TabCompleter {
             case "item-handling.remove-dropped":
             case "remove-dropped":
                 return "anti-netherite.item-handling.remove-dropped";
+
+            // Loot table settings
+            case "loot-tables.remove-blocked-items":
+            case "remove-loot-table-items":
+                return "anti-netherite.loot-tables.remove-blocked-items";
+            case "loot-tables.inherit-detection-items":
+            case "loot-table-inherit-detection-items":
+                return "anti-netherite.loot-tables.inherit-detection-items";
                 
             // Ancient debris settings
             case "ancient-debris.replace-when-mined":
@@ -616,6 +663,9 @@ public class AntiNetheriteCommand implements CommandExecutor, TabCompleter {
             case "ancient-debris.ensure-chunks-loaded":
             case "ensure-chunks-loaded":
                 return "anti-netherite.ancient-debris.ensure-chunks-loaded";
+            case "ancient-debris.save-replaced-locations":
+            case "save-replaced-locations":
+                return "anti-netherite.ancient-debris.save-replaced-locations";
                 
             // Performance settings
             case "performance.restore-debris-on-disable":
@@ -641,6 +691,12 @@ public class AntiNetheriteCommand implements CommandExecutor, TabCompleter {
             case "advanced.log-inventory-removals":
             case "log-inventory-removals":
                 return "anti-netherite.advanced.log-inventory-removals";
+            case "advanced.ignore-creative-spectator":
+            case "ignore-creative-spectator":
+                return "anti-netherite.advanced.ignore-creative-spectator";
+            case "advanced.notify-players":
+            case "notify-players":
+                return "anti-netherite.advanced.notify-players";
                 
             // Detection settings
             case "detection.use-name-matching":
@@ -676,25 +732,43 @@ public class AntiNetheriteCommand implements CommandExecutor, TabCompleter {
         return filtered;
     }
 
+    private boolean allowsUnlimitedValue(String settingPath) {
+        return settingPath.equals("anti-netherite.performance.max-replacements-per-chunk")
+                || settingPath.equals("anti-netherite.advanced.max-locations-per-world");
+    }
+
+    private String getListConfigPath(String setting) {
+        switch (setting) {
+            case "detection.items":
+                return "anti-netherite.detection.items";
+            case "loot-tables.items":
+                return "anti-netherite.loot-tables.items";
+            case "loot-tables.preserve-items":
+                return "anti-netherite.loot-tables.preserve-items";
+            default:
+                return null;
+        }
+    }
+
     /**
-     * Safely retrieves the detection.items list from the config, ensuring type safety.
+     * Safely retrieves a string list from the config, ensuring type safety.
      * Filters out any non-string entries and logs warnings if the data type is unexpected.
-     * @return a mutable List<String> of detection items (never null)
+     * @return a mutable List<String> of config entries (never null)
      */
-    private List<String> getDetectionItems() {
-        Object value = plugin.getConfigValue("anti-netherite.detection.items");
+    private List<String> getStringList(String path) {
+        Object value = plugin.getConfigValue(path);
         List<String> result = new ArrayList<>();
         if (value instanceof List<?>) {
             for (Object o : (List<?>) value) {
                 if (o instanceof String s) {
                     result.add(s);
                 } else if (o != null) {
-                    plugin.getLogger().warning("Non-string entry in detection.items: " + o);
+                    plugin.getLogger().warning("Non-string entry in " + path + ": " + o);
                 }
             }
         } else if (value != null) {
-            plugin.getLogger().warning("detection.items config value is not a list: " + value.getClass().getName());
+            plugin.getLogger().warning(path + " config value is not a list: " + value.getClass().getName());
         }
         return result;
     }
-} 
+}

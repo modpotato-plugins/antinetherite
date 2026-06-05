@@ -60,6 +60,50 @@ anti-netherite:
     # Should we remove netherite items when dropped?
     # This removes netherite items when players drop them
     remove-dropped: false
+
+  # ==============================
+  # LOOT TABLE SETTINGS
+  # ==============================
+
+  loot-tables:
+    # Should we remove blocked Netherite items from generated loot tables?
+    # This filters the generated loot before it is placed into chests, entities, etc.
+    # It does not remove unrelated loot from the same table
+    remove-blocked-items: true
+
+    # Should loot table filtering inherit the main detection.items block list?
+    # If true, loot-tables.items is added on top of detection.items
+    # If false, only loot-tables.items is used for loot table filtering
+    inherit-detection-items: true
+
+    # Additional items to remove from generated loot tables
+    # These are Bukkit Material enum names
+    # When inherit-detection-items is false, this becomes the complete loot table block list
+    # Vanilla Minecraft does not currently include Netherite wolf armor; add
+    # NETHERITE_WOLF_ARMOR here if your server software or custom content provides it
+    items:
+      - NETHERITE_SWORD
+      - NETHERITE_PICKAXE
+      - NETHERITE_AXE
+      - NETHERITE_SHOVEL
+      - NETHERITE_HOE
+      - NETHERITE_SPEAR
+      - NETHERITE_HELMET
+      - NETHERITE_CHESTPLATE
+      - NETHERITE_LEGGINGS
+      - NETHERITE_BOOTS
+      - NETHERITE_HORSE_ARMOR
+      - NETHERITE_NAUTILUS_ARMOR
+      - NETHERITE_BLOCK
+      - NETHERITE_UPGRADE_SMITHING_TEMPLATE
+
+    # Items that should never be removed by loot table filtering
+    # This lets servers block generated Netherite gear while still allowing
+    # resource-style loot such as Ancient Debris, scraps, and ingots
+    preserve-items:
+      - ANCIENT_DEBRIS
+      - NETHERITE_SCRAP
+      - NETHERITE_INGOT
   
   # ==============================
   # ANCIENT DEBRIS SETTINGS
@@ -167,13 +211,17 @@ anti-netherite:
       - NETHERITE_AXE
       - NETHERITE_SHOVEL
       - NETHERITE_HOE
+      - NETHERITE_SPEAR
       - NETHERITE_HELMET
       - NETHERITE_CHESTPLATE
       - NETHERITE_LEGGINGS
       - NETHERITE_BOOTS
+      - NETHERITE_HORSE_ARMOR
+      - NETHERITE_NAUTILUS_ARMOR
       - NETHERITE_BLOCK
       - NETHERITE_INGOT
       - NETHERITE_SCRAP
+      - NETHERITE_UPGRADE_SMITHING_TEMPLATE
       - ANCIENT_DEBRIS
   
   # ==============================
