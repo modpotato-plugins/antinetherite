@@ -3,23 +3,23 @@ anti-netherite:
   # ==============================
   # GLOBAL SETTINGS
   # ==============================
-  
+
   global:
     # Should we enable destructive actions?
     # If true, the plugin will delete/remove items when appropriate
     # If false, the plugin will only cancel events without destroying items
     # This affects item drops, inventory clearing, and other destructive operations
     enable-destructive-actions: false
-  
+
   # ==============================
   # INVENTORY PROTECTION SETTINGS
   # ==============================
-  
+
   inventory:
     # Should we clear netherite in the inventory of players?
     # This feature is compatible with Folia using region-aware schedulers
     clear: false
-    
+
     # Should we cancel moving netherite items in inventories?
     # This prevents players from moving netherite items in their inventory
     cancel-move: true
@@ -34,29 +34,29 @@ anti-netherite:
   # ==============================
   # ITEM INTERACTION SETTINGS
   # ==============================
-  
+
   interaction:
     # Should we cancel crafting of netherite items?
     # This prevents players from crafting any items containing netherite
     cancel-craft: true
-    
+
     # Should we cancel equipping of netherite items?
     # This prevents players from equipping netherite armor
     cancel-equip: true
-    
+
     # Should we cancel attacking with netherite items?
     # This prevents players from attacking with netherite weapons
     cancel-attack: true
-  
+
   # ==============================
   # ITEM PICKUP/DROP SETTINGS
   # ==============================
-  
+
   item-handling:
     # Should we cancel picking up netherite items?
     # This prevents players from picking up netherite items from the ground
     cancel-pickup: true
-    
+
     # Should we remove netherite items when dropped?
     # This removes netherite items when players drop them
     remove-dropped: false
@@ -79,8 +79,6 @@ anti-netherite:
     # Additional items to remove from generated loot tables
     # These are Bukkit Material enum names
     # When inherit-detection-items is false, this becomes the complete loot table block list
-    # Vanilla Minecraft does not currently include Netherite wolf armor; add
-    # NETHERITE_WOLF_ARMOR here if your server software or custom content provides it
     items:
       - NETHERITE_SWORD
       - NETHERITE_PICKAXE
@@ -92,8 +90,8 @@ anti-netherite:
       - NETHERITE_CHESTPLATE
       - NETHERITE_LEGGINGS
       - NETHERITE_BOOTS
-      - NETHERITE_HORSE_ARMOR
-      - NETHERITE_NAUTILUS_ARMOR
+      # - NETHERITE_HORSE_ARMOR # uncomment depending on version, should be covered by pattern matching
+      # - NETHERITE_NAUTILUS_ARMOR # same as above
       - NETHERITE_BLOCK
       - NETHERITE_UPGRADE_SMITHING_TEMPLATE
 
@@ -104,103 +102,103 @@ anti-netherite:
       - ANCIENT_DEBRIS
       - NETHERITE_SCRAP
       - NETHERITE_INGOT
-  
+
   # ==============================
   # ANCIENT DEBRIS SETTINGS
   # ==============================
-  
+
   ancient-debris:
     # Should we replace Ancient Debris with Netherrack when mined?
     # This prevents players from obtaining Ancient Debris
     replace-when-mined: true
-    
+
     # Should we replace Ancient Debris with Netherrack when chunks are loaded?
     # This prevents Ancient Debris from generating in the world
     # THIS MAY CAUSE LAG ON FIRST LOAD
     replace-on-chunk-load: false
-    
+
     # Should we only replace Ancient Debris in chunks that are already generated?
     # If true, only chunks that have been generated will be processed
     # If false, all chunks will be processed regardless of generation status
     only-replace-generated-chunks: true
-    
+
     # Should we ensure chunks are loaded when trying to replace Ancient Debris?
     # If true, chunks will be loaded if they are not already loaded
     # If false, only already loaded chunks will be processed
     ensure-chunks-loaded: false
-    
+
     # Should we save the locations of replaced Ancient Debris?
     # If true, the plugin will track and save replaced Ancient Debris locations
     # If false, Ancient Debris will be replaced but not tracked or saved
     # Setting this to false will prevent restoration of Ancient Debris
     save-replaced-locations: false
-  
+
   # ==============================
   # PERFORMANCE SETTINGS
   # ==============================
-  
+
   performance:
     # Should we restore Ancient Debris when the plugin is disabled?
     # WARNING: This can cause significant lag if there are many replaced blocks
     # If false, Ancient Debris will remain as Netherrack when the plugin is disabled
     restore-debris-on-disable: false
-    
+
     # Should we restore Ancient Debris when the configuration changes?
     # WARNING: This can cause significant lag if there are many replaced blocks
     # If false, Ancient Debris will remain as Netherrack when the configuration changes
     restore-debris-on-config-change: false
-    
+
     # Maximum number of Ancient Debris to replace per chunk to prevent lag
     # Higher values may cause more lag but will replace more Ancient Debris
     # Lower values will reduce lag but may leave some Ancient Debris unreplaced
     # Set to -1 to remove the limit entirely (not recommended for performance)
     max-replacements-per-chunk: 50
-  
+
   # ==============================
   # ADVANCED SETTINGS
   # ==============================
-  
+
   advanced:
     # Maximum number of Ancient Debris locations to store per world
     # Higher values use more memory but allow tracking more replaced blocks
     # Lower values use less memory but may limit the number of blocks that can be restored
     # Set to -1 to remove the limit entirely (not recommended for large worlds)
     max-locations-per-world: 10000
-    
+
     # Cooldown in seconds between command executions
     # This prevents command spam and potential performance issues
     command-cooldown-seconds: 1
-    
+
     # Should we log Ancient Debris replacements to the console?
     # If true, a message will be logged each time Ancient Debris is replaced
     # If false, only summary messages will be logged
     log-debris-replacements: true
-    
+
     # Should we log Netherite item removals from inventories?
     # If true, a message will be logged each time Netherite items are removed
     # If false, only summary messages will be logged
     log-inventory-removals: true
-    
+
     # Should we ignore players in creative or spectator mode?
     # If true, players in creative or spectator mode will not be affected by the plugin
     # If false, all players will be affected regardless of game mode
     ignore-creative-spectator: true
-    
+
     # Should we send notification messages to players?
     # If true, players will be notified when the plugin blocks their actions
     # If false, players will only be notified for destructive actions (item removal, etc.)
     notify-players: true
-  
+
   # ==============================
   # DETECTION SETTINGS
   # ==============================
-  
+
   detection:
     # Should we use name matching to detect Netherite items?
     # If true, any item with a name containing "NETHERITE" will be considered a Netherite item
     # If false, only items in the list below will be considered Netherite items
     use-name-matching: true
-    
+
     # List of items to consider as Netherite items
     # These are Bukkit Material enum names
     # You can add custom items here if needed
@@ -211,28 +209,28 @@ anti-netherite:
       - NETHERITE_AXE
       - NETHERITE_SHOVEL
       - NETHERITE_HOE
-      - NETHERITE_SPEAR
+      # - NETHERITE_SPEAR
       - NETHERITE_HELMET
       - NETHERITE_CHESTPLATE
       - NETHERITE_LEGGINGS
       - NETHERITE_BOOTS
-      - NETHERITE_HORSE_ARMOR
-      - NETHERITE_NAUTILUS_ARMOR
+      # - NETHERITE_HORSE_ARMOR # uncomment depending on version, should be covered by pattern matching
+      # - NETHERITE_NAUTILUS_ARMOR # same as above
       - NETHERITE_BLOCK
       - NETHERITE_INGOT
       - NETHERITE_SCRAP
       - NETHERITE_UPGRADE_SMITHING_TEMPLATE
       - ANCIENT_DEBRIS
-  
+
   # ==============================
   # TIMING SETTINGS
   # ==============================
-  
+
   timing:
     # Delay in seconds between each inventory check
     # Higher values reduce server load but may allow players to keep netherite items longer
     delay: 1
-    
+
     # Multiply the delay by this number to get the actual delay in ticks
     # 20 ticks = 1 second, so the default is 1 second between checks
     # This is used for both Bukkit and Folia schedulers

@@ -126,8 +126,8 @@ anti-netherite:
       - NETHERITE_CHESTPLATE
       - NETHERITE_LEGGINGS
       - NETHERITE_BOOTS
-      - NETHERITE_HORSE_ARMOR
-      - NETHERITE_NAUTILUS_ARMOR
+      # - NETHERITE_HORSE_ARMOR # uncomment depending on version, should be covered by pattern matching
+      # - NETHERITE_NAUTILUS_ARMOR # same as above
       - NETHERITE_BLOCK
       - NETHERITE_UPGRADE_SMITHING_TEMPLATE
 
@@ -245,13 +245,13 @@ anti-netherite:
       - NETHERITE_AXE
       - NETHERITE_SHOVEL
       - NETHERITE_HOE
-      - NETHERITE_SPEAR
+      # - NETHERITE_SPEAR # see below
       - NETHERITE_HELMET
       - NETHERITE_CHESTPLATE
       - NETHERITE_LEGGINGS
       - NETHERITE_BOOTS
-      - NETHERITE_HORSE_ARMOR
-      - NETHERITE_NAUTILUS_ARMOR
+      # - NETHERITE_HORSE_ARMOR # uncomment depending on version, should be covered by pattern matching
+      # - NETHERITE_NAUTILUS_ARMOR # same as above
       - NETHERITE_BLOCK
       - NETHERITE_INGOT
       - NETHERITE_SCRAP
