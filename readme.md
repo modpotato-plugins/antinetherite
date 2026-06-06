@@ -2,7 +2,7 @@
 
 AntiNetherite is a highly configurable Minecraft plugin designed to remove Netherite items from player inventories and prevent their crafting, equipping, and attacking with Netherite items. Every aspect of the plugin can be enabled, disabled, or fine-tuned to suit your server's needs.
 
-The plugin operates in **non-destructive mode by default** (`enable-destructive-actions: false`). In non-destructive mode, it will only prevent the use of Netherite items without destroying them, making it player-friendly while still enforcing server rules. You can switch to destructive mode by setting `enable-destructive-actions: true`, which will remove items from inventories and delete dropped items.
+The plugin operates in **non-destructive mode by default** (`enable-destructive-actions: false`). In non-destructive mode, it will only prevent the use of Netherite items without destroying them, making it player-friendly while still enforcing server rules. You can switch to destructive mode by setting `enable-destructive-actions: true`, which will remove items from inventories, delete dropped items, and filter blocked items from generated loot tables.
 
 ## Features
 
@@ -42,7 +42,7 @@ anti-netherite:
     # Should we enable destructive actions?
     # If true, the plugin will delete/remove items when appropriate
     # If false, the plugin will only cancel events without destroying items
-    # This affects item drops, inventory clearing, and other destructive operations
+    # This affects item drops, inventory clearing, loot table filtering, and other destructive operations
     enable-destructive-actions: false
   
   # ==============================
@@ -103,6 +103,7 @@ anti-netherite:
     # Should we remove blocked Netherite items from generated loot tables?
     # This filters the generated loot before it is placed into chests, entities, etc.
     # It does not remove unrelated loot from the same table
+    # Requires global.enable-destructive-actions to be true
     remove-blocked-items: true
 
     # Should loot table filtering inherit the main detection.items block list?
@@ -293,7 +294,7 @@ The plugin provides comprehensive commands to manage all settings in-game withou
 Every setting in the configuration file can be adjusted through these commands. Available settings are organized by category:
 
 **Global settings:**
-- `global.enable-destructive-actions` - Enable/disable destructive actions like removing items (true/false)
+- `global.enable-destructive-actions` - Enable/disable destructive actions like removing items and filtering generated loot (true/false)
 
 **Inventory settings:**
 - `inventory.clear` - Enable/disable clearing Netherite from inventories (true/false)
@@ -310,7 +311,7 @@ Every setting in the configuration file can be adjusted through these commands. 
 - `item-handling.remove-dropped` - Enable/disable removing dropped Netherite items (true/false)
 
 **Loot table settings:**
-- `loot-tables.remove-blocked-items` - Enable/disable removing blocked Netherite items from generated loot tables (true/false)
+- `loot-tables.remove-blocked-items` - Enable/disable removing blocked Netherite items from generated loot tables; only effective when `global.enable-destructive-actions` is true (true/false)
 - `loot-tables.inherit-detection-items` - Enable/disable inheriting the main `detection.items` list for loot table filtering (true/false)
 - `loot-tables.use-name-matching` - Enable/disable name matching for loot table filtering, operating independently of `inherit-detection-items` (true/false)
 
@@ -378,8 +379,8 @@ You can toggle between these methods using the `detection.use-name-matching` set
 The plugin can prevent players from using Netherite items in several ways:
 
 1. **Destructive vs. Non-Destructive Mode**: The global setting `enable-destructive-actions` controls how the plugin handles Netherite items:
-   - **Non-destructive mode (default, `enable-destructive-actions: false`)**: Events are cancelled but items are not destroyed, making it player-friendly while still preventing Netherite usage
-   - **Destructive mode (`enable-destructive-actions: true`)**: Items are removed from inventories and deleted when dropped for stricter enforcement
+   - **Non-destructive mode (default, `enable-destructive-actions: false`)**: Events are cancelled where possible but items and generated loot are not destroyed, making it player-friendly while still preventing Netherite usage
+   - **Destructive mode (`enable-destructive-actions: true`)**: Items are removed from inventories, deleted when dropped, and filtered from generated loot tables for stricter enforcement
    
    To switch modes, use the command: `/antinetherite set global.enable-destructive-actions <true|false>` or edit the configuration file
 

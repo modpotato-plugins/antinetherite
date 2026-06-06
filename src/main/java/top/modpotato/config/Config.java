@@ -388,11 +388,13 @@ public class Config {
     }
 
     /**
-     * Gets whether generated loot table contents should be filtered for blocked items
-     * @return true if blocked loot table items should be removed, false otherwise
+     * Gets whether generated loot table contents should be filtered for blocked items.
+     * Loot table filtering removes generated items, so it follows the global
+     * destructive-actions setting.
+     * @return true if destructive actions and loot table filtering are both enabled
      */
     public boolean isRemoveLootTableItems() {
-        return removeLootTableItems;
+        return enableDestructiveActions && removeLootTableItems;
     }
 
     /**

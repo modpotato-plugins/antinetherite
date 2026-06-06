@@ -8,7 +8,7 @@ anti-netherite:
     # Should we enable destructive actions?
     # If true, the plugin will delete/remove items when appropriate
     # If false, the plugin will only cancel events without destroying items
-    # This affects item drops, inventory clearing, and other destructive operations
+    # This affects item drops, inventory clearing, loot table filtering, and other destructive operations
     enable-destructive-actions: false
 
   # ==============================
@@ -69,6 +69,7 @@ anti-netherite:
     # Should we remove blocked Netherite items from generated loot tables?
     # This filters the generated loot before it is placed into chests, entities, etc.
     # It does not remove unrelated loot from the same table
+    # Requires global.enable-destructive-actions to be true
     remove-blocked-items: true
 
     # Should loot table filtering inherit the main detection.items block list?
